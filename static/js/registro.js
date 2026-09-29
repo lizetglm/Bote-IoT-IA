@@ -2,7 +2,7 @@ const formRegistro = $("form-registro");
 
 // Si ya hay sesión no tiene caso mostrar el registro
 db.auth.getSession().then(({ data }) => {
-  if (data.session) window.location.href = "/";
+  if (data.session) window.location.href = "/home";
 });
 
 // Supabase responde en inglés; traducimos los errores más comunes
@@ -30,7 +30,7 @@ formRegistro.addEventListener("submit", (e) => {
       return;
     }
     if (data.session) {
-      window.location.href = "/";
+      window.location.href = "/home";
     } else {
       // Por si se vuelve a activar la confirmación por correo en Supabase
       formRegistro.reset();

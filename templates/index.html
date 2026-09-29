@@ -26,3 +26,12 @@
 
 </div>
 {% endblock %}
+
+{% block scripts %}
+  <script>
+    // Con la sesión iniciada la portada no tiene caso: directo a la home
+    db.auth.getSession().then(({ data }) => {
+      if (data.session) window.location.replace("/home");
+    });
+  </script>
+{% endblock %}

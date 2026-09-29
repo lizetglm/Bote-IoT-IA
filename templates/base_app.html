@@ -1,0 +1,129 @@
+{#
+  Base de las pantallas que se ven con la sesión iniciada (home, mapa, escanear, premios, panel, perfil).
+  Trae el encabezado (menú, logo, perfil) y el menú lateral desplegable. La lógica está en static/js/app.js.
+  Cada pantalla solo llena {% block contenido %} y, si necesita JS propio, {% block scripts %}.
+  La portada, el login y el registro siguen usando base.html.
+#}
+{% macro enlace(endpoint, texto) %}
+  <a href="{{ url_for(endpoint) }}"{% if request.endpoint == endpoint %} aria-current="page"{% endif %}
+     class="flex min-h-[44px] items-center gap-3 rounded-xl px-3 py-2.5 text-base font-semibold text-gray-700 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-eco-600 aria-[current=page]:bg-eco-50 aria-[current=page]:text-eco-800">
+    {{ caller() }}
+    <span>{{ texto }}</span>
+  </a>
+{% endmacro %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Basurin | Bote Inteligente{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            eco: {
+              50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac', 400: '#4ade80',
+              500: '#22c55e', 600: '#16a34a', 700: '#15803d', 800: '#166534', 900: '#14532d'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+</head>
+<body class="min-h-screen bg-gray-50 font-sans text-gray-800 antialiased selection:bg-eco-500 selection:text-white">
+
+  <a href="#contenido" class="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[80] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:font-semibold focus:shadow-lg">Saltar al contenido</a>
+
+  <!-- Encabezado: menú (izquierda), logo y perfil (derecha) -->
+  <header class="sticky top-0 z-30 border-b border-gray-100 bg-white shadow-sm">
+    <div class="mx-auto flex h-14 max-w-6xl items-center justify-between px-3 sm:px-6 lg:px-8">
+      <button id="btn-menu" type="button" aria-label="Abrir menú" aria-controls="menu-lateral" aria-expanded="false"
+              class="flex h-11 w-11 items-center justify-center rounded-xl text-gray-700 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-eco-600">
+        <svg aria-hidden="true" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
+      </button>
+
+      <a href="{{ url_for('home') }}" class="rounded-lg px-1 text-2xl font-extrabold tracking-tight text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-eco-600">
+        <span class="text-eco-600">Ba</span>sur<span class="text-eco-600">in</span>
+      </a>
+
+      <a id="btn-perfil" href="{{ url_for('perfil') }}" aria-label="Mi perfil"
+         class="flex h-11 w-11 items-center justify-center rounded-full bg-eco-50 text-sm font-bold text-eco-800 ring-1 ring-eco-200 hover:bg-eco-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-eco-600">
+        <span id="avatar-iniciales" class="flex items-center justify-center">
+          <svg aria-hidden="true" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Menú lateral: oculto hasta que se pulsa el botón del encabezado (inert = sin foco mientras está cerrado) -->
+  <div id="menu-overlay" class="fixed inset-0 z-40 hidden bg-black/40" aria-hidden="true"></div>
+  <aside id="menu-lateral" aria-label="Menú principal" inert
+         class="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] -translate-x-full flex-col bg-white transition-transform duration-200 motion-reduce:transition-none [&:not([inert])]:shadow-2xl">
+    <div class="flex items-start justify-between gap-2 border-b border-gray-100 p-4">
+      <div class="min-w-0">
+        <p id="menu-nombre" class="truncate text-base font-bold text-gray-900">Cargando…</p>
+        <p class="text-sm font-semibold text-eco-700"><span id="menu-puntos">–</span> puntos</p>
+      </div>
+      <button id="btn-cerrar-menu" type="button" aria-label="Cerrar menú"
+              class="-mr-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-gray-600 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-eco-600">
+        <svg aria-hidden="true" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto p-3" aria-label="Secciones de la app">
+      <ul class="space-y-1">
+        <li>{% call enlace('home', 'Inicio') %}
+          <svg aria-hidden="true" class="h-6 w-6 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
+        {% endcall %}</li>
+        <li>{% call enlace('mapa', 'Ubicaciones de botes') %}
+          <svg aria-hidden="true" class="h-6 w-6 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+        {% endcall %}</li>
+        <li>{% call enlace('escanear', 'Escanear QR') %}
+          <svg aria-hidden="true" class="h-6 w-6 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="6" height="6" rx="1"/><rect x="14.5" y="3.5" width="6" height="6" rx="1"/><rect x="3.5" y="14.5" width="6" height="6" rx="1"/><path stroke-linecap="round" stroke-linejoin="round" d="M14.5 14.5h2v2h-2zM18.5 14.5h2v2h-2zM14.5 18.5h2v2h-2zM18.5 18.5h2v2h-2z"/></svg>
+        {% endcall %}</li>
+        <li>{% call enlace('premios', 'Premios') %}
+          <svg aria-hidden="true" class="h-6 w-6 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
+        {% endcall %}</li>
+        <!-- Solo para administradores: app.js lo muestra si usuarios.rol = 1 -->
+        <li id="menu-item-panel" class="hidden">{% call enlace('panel', 'Panel de control') %}
+          <svg aria-hidden="true" class="h-6 w-6 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>
+        {% endcall %}</li>
+        <li>{% call enlace('perfil', 'Mi perfil') %}
+          <svg aria-hidden="true" class="h-6 w-6 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        {% endcall %}</li>
+      </ul>
+    </nav>
+
+    <div class="border-t border-gray-100 p-3">
+      <button id="btn-salir" type="button"
+              class="flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3 py-2.5 text-base font-semibold text-gray-700 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-eco-600">
+        <svg aria-hidden="true" class="h-6 w-6 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+        <span>Cerrar sesión</span>
+      </button>
+    </div>
+  </aside>
+
+  {# Una pantalla que necesite todo el ancho (como el mapa) puede cambiar las clases con {% block main_clases %} #}
+  <main id="contenido" class="{% block main_clases %}mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8{% endblock %}">
+    {% block contenido %}{% endblock %}
+  </main>
+
+  <!-- Mensajes flotantes (Basurin.aviso) -->
+  <div id="avisos" role="status" aria-live="polite" class="pointer-events-none fixed inset-x-0 bottom-4 z-[70] flex flex-col items-center gap-2 px-4"></div>
+
+  <script>
+    window.BASURIN_CONFIG = {
+      url: {{ supabase_url | tojson }},
+      anonKey: {{ supabase_anon_key | tojson }},
+      demoPermitido: {{ demo_permitido | tojson }}
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,14 @@
+{% extends "base_app.html" %}
+{% block titulo %}Panel de control · Basurin{% endblock %}
+
+{% block contenido %}
+<section class="rounded-3xl border-2 border-dashed border-gray-300 bg-white p-8 text-center">
+  <h1 class="text-2xl font-extrabold text-gray-900">Panel de control</h1>
+  <p class="mt-2 text-gray-500">Pantalla en construcción. Solo para administradores.</p>
+  <p class="mt-1 text-sm text-gray-500">Lo que debe hacer está descrito en <code>static/js/panel.js</code>.</p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/panel.js') }}"></script>
+{% endblock %}
