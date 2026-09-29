@@ -26,6 +26,14 @@
   border: 1px solid #bbf7d0;
 }
 
+/* Carruseles con scroll horizontal: se deslizan con el dedo o con sus botones, sin barra visible */
+.sin-barra {
+  scrollbar-width: none;
+}
+.sin-barra::-webkit-scrollbar {
+  display: none;
+}
+
 /* Animación de carga en los botones */
 button:disabled {
   opacity: 0.6;
