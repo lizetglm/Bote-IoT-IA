@@ -314,7 +314,7 @@ def main():
     parser.add_argument("--modelo", default=str(MODELO_POR_DEFECTO), help="Ruta al best.pt entrenado")
     parser.add_argument("--puerto", default=None, help="Puerto del ESP32 (ej. COM3). Si se omite, se autodetecta")
     parser.add_argument("--baudios", type=int, default=BAUDIOS)
-    parser.add_argument("--camara", type=int, default=0, help="Índice de la cámara (0 = principal)")
+    parser.add_argument("--camara", type=int, default=0, help="Índice de la cámara (0 = principal, si falla usa la 1)")
     parser.add_argument("--conf", type=float, default=0.65, help="Confianza mínima (0-1)")
     parser.add_argument("--dispositivo", default=None,
                         help="Forzar dispositivo: cpu, cuda:0, mps. Si se omite, se detecta solo")
@@ -330,7 +330,11 @@ def main():
     conexion = ConexionESP32(args.puerto, args.baudios)
     bote = BoteInteligente(ruta_modelo, conexion, args.conf, dispositivo)
 
-    cap = cv2.VideoCapture(args.camara, cv2.CAP_DSHOW if sys.platform == "win32" else cv2.CAP_ANY)
+    backend = cv2.CAP_DSHOW if sys.platform == "win32" else cv2.CAP_ANY
+    cap = cv2.VideoCapture(args.camara, backend)
+    if not cap.isOpened() and args.camara == 0:
+        log("AVISO: No se detectó la cámara 0. Intentando con la cámara 1...")
+        cap = cv2.VideoCapture(1, backend)
     if not cap.isOpened():
         log(f"ERROR: No se pudo abrir la cámara {args.camara}.")
         conexion.cerrar()
