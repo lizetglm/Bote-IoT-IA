@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block titulo %}Registro · Bote Inteligente{% endblock %}
+
+{% block contenido %}
+  <section class="tarjeta">
+    <h1>Crear cuenta</h1>
+
+    <form class="formulario" id="form-registro">
+      <label>Nombre
+        <input type="text" name="nombre" autocomplete="name" required>
+      </label>
+      <label>Correo
+        <input type="email" name="correo" autocomplete="email" required>
+      </label>
+      <label>Contraseña
+        <input type="password" name="contrasena" autocomplete="new-password" minlength="6" required>
+      </label>
+      <button class="btn btn-primario" type="submit">Crear cuenta</button>
+    </form>
+
+    <p class="mensaje" id="mensaje" role="status"></p>
+
+    <p class="cambio">¿Ya tienes cuenta? <a href="{{ url_for('login') }}">Ingresa</a></p>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/registro.js') }}"></script>
+{% endblock %}

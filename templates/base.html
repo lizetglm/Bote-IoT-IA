@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Bote Inteligente{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+</head>
+<body>
+  <nav class="nav">
+    <a class="nav-marca" href="{{ url_for('index') }}">Bote <span>Inteligente</span></a>
+
+    <!-- Sin sesión -->
+    <div class="nav-acciones" id="nav-invitado">
+      <a class="btn btn-primario" href="{{ url_for('login') }}">Iniciar sesión</a>
+    </div>
+
+    <!-- Con sesión -->
+    <div class="nav-acciones oculto" id="nav-usuario">
+      <span class="nav-nombre" id="usuario-nombre"></span>
+      <span class="nav-puntos"><strong id="usuario-puntos">0</strong> pts</span>
+      <button class="btn btn-secundario" id="btn-salir">Salir</button>
+    </div>
+  </nav>
+
+  <main>
+    {% block contenido %}{% endblock %}
+  </main>
+
+  <script>
+    window.SUPABASE_CONFIG = {
+      url: {{ supabase_url | tojson }},
+      anonKey: {{ supabase_anon_key | tojson }}
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="{{ url_for('static', filename='js/sesion.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block titulo %}Ingresar · Bote Inteligente{% endblock %}
+
+{% block contenido %}
+  <section class="tarjeta">
+    <h1>Ingresar</h1>
+
+    <form class="formulario" id="form-ingresar">
+      <label>Correo
+        <input type="email" name="correo" autocomplete="email" required>
+      </label>
+      <label>Contraseña
+        <input type="password" name="contrasena" autocomplete="current-password" required>
+      </label>
+      <button class="btn btn-primario" type="submit">Ingresar</button>
+    </form>
+
+    <p class="mensaje" id="mensaje" role="status"></p>
+
+    <p class="cambio">¿No tienes cuenta? <a href="{{ url_for('registro') }}">Regístrate</a></p>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+{% endblock %}

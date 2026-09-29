@@ -2,3 +2,4 @@
 __pycache__/
 runs/
 modelo/last.pt
+.env

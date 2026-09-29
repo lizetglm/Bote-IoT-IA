@@ -1,0 +1,107 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: #f3f5f2;
+  color: #1b2320;
+}
+
+main { padding: 24px; }
+
+h1 { margin: 0; }
+h1 span { color: #1f8a5b; }
+header p { color: #65716c; margin-top: 4px; }
+
+.oculto { display: none !important; }
+
+/* ---------- Nav ---------- */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 24px;
+  background: #fff;
+  border-bottom: 1px solid #dfe5e1;
+}
+
+.nav-marca {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: inherit;
+  text-decoration: none;
+}
+.nav-marca span { color: #1f8a5b; }
+
+.nav-acciones {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-nombre { color: #65716c; }
+
+.nav-puntos {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #e3f3eb;
+  color: #1f8a5b;
+}
+
+/* ---------- Botones ---------- */
+.btn {
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn:disabled { opacity: .6; cursor: wait; }
+
+.btn-primario { background: #1f8a5b; color: #fff; }
+.btn-primario:hover { background: #197249; }
+
+.btn-secundario { background: transparent; border-color: #c9d2cd; color: inherit; }
+.btn-secundario:hover { background: #f3f5f2; }
+
+/* ---------- Páginas de login y registro ---------- */
+.tarjeta {
+  width: min(400px, 100%);
+  margin: 40px auto;
+  padding: 28px 24px;
+  background: #fff;
+  border: 1px solid #dfe5e1;
+  border-radius: 12px;
+}
+.tarjeta h1 { margin: 0 0 20px; font-size: 1.5rem; }
+
+.cambio { margin: 18px 0 0; text-align: center; color: #65716c; font-size: .9rem; }
+.cambio a { color: #1f8a5b; font-weight: 600; }
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.formulario label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: .9rem;
+  color: #3c4843;
+}
+
+.formulario input {
+  padding: 9px 11px;
+  border: 1px solid #c9d2cd;
+  border-radius: 8px;
+  font: inherit;
+}
+.formulario input:focus { outline: 2px solid #1f8a5b; outline-offset: -1px; }
+
+.mensaje { min-height: 1.2em; margin: 14px 0 0; font-size: .9rem; }
+.mensaje.error { color: #c0392b; }
+.mensaje.exito { color: #1f8a5b; }
