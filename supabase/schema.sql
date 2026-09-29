@@ -82,15 +82,25 @@ create table if not exists public.sesiones_activas (
 -- ============================================================
 -- TRANSACCIONES
 -- Cada residuo depositado: en qué bote, qué material, cuántos puntos y cuándo.
+-- usuario_id vacío = nadie estaba vinculado al bote: el residuo cuenta para las
+-- estadísticas pero no da puntos a nadie (puntos = 0). Si un usuario borra su
+-- cuenta, sus depósitos se quedan sin usuario (no se borran de las estadísticas).
 -- ============================================================
 create table if not exists public.transacciones (
   id          bigint generated always as identity primary key,
-  usuario_id  uuid   not null references public.usuarios (id) on delete cascade,
+  usuario_id  uuid   references public.usuarios (id) on delete set null,
   bote_id     bigint not null references public.botes (id) on delete restrict,
   material    text   not null,
   puntos      integer not null check (puntos >= 0),
   fecha       timestamptz not null default now()
 );
+
+-- Para bases creadas cuando usuario_id era obligatorio y se borraba con la cuenta
+alter table public.transacciones alter column usuario_id drop not null;
+alter table public.transacciones drop constraint if exists transacciones_usuario_id_fkey;
+alter table public.transacciones
+  add constraint transacciones_usuario_id_fkey
+  foreign key (usuario_id) references public.usuarios (id) on delete set null;
 
 create index if not exists transacciones_usuario_idx on public.transacciones (usuario_id, fecha desc);
 create index if not exists transacciones_bote_idx    on public.transacciones (bote_id, fecha desc);

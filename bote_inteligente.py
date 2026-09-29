@@ -220,6 +220,7 @@ class BoteInteligente:
         self.ultima_vista = None
         self.ultimo_comando = "-"
         self.conteo = Counter()
+        self.al_clasificar = None  # función(material) que llama cada clasificación (el panel web la usa para guardarla)
 
         log(f"Modelo cargado: {ruta_modelo} (dispositivo: {dispositivo})")
         log(f"Clases del modelo: {self.model.names}")
@@ -285,6 +286,8 @@ class BoteInteligente:
         log(f">>> Clasificado: {nombre} ({conf * 100:.1f}%) -> comando '{comando}' {destino}")
 
         self.conteo[nombre] += 1
+        if self.al_clasificar is not None:
+            self.al_clasificar(nombre)
         self.ultimo_comando = f"{comando} ({nombre})"
         self.ultimo_envio = time.time()
         self.frames_candidato = 0
@@ -309,6 +312,16 @@ class BoteInteligente:
 # ==========================================
 # PROGRAMA PRINCIPAL
 # ==========================================
+def abrir_camara(indice=0):
+    """Abre la cámara pedida; si es la 0 y no responde, prueba con la 1."""
+    backend = cv2.CAP_DSHOW if sys.platform == "win32" else cv2.CAP_ANY
+    cap = cv2.VideoCapture(indice, backend)
+    if not cap.isOpened() and indice == 0:
+        log("AVISO: No se detectó la cámara 0. Intentando con la cámara 1...")
+        cap = cv2.VideoCapture(1, backend)
+    return cap
+
+
 def main():
     parser = argparse.ArgumentParser(description="Bote inteligente: YOLO + ESP32 por serial")
     parser.add_argument("--modelo", default=str(MODELO_POR_DEFECTO), help="Ruta al best.pt entrenado")
@@ -330,11 +343,7 @@ def main():
     conexion = ConexionESP32(args.puerto, args.baudios)
     bote = BoteInteligente(ruta_modelo, conexion, args.conf, dispositivo)
 
-    backend = cv2.CAP_DSHOW if sys.platform == "win32" else cv2.CAP_ANY
-    cap = cv2.VideoCapture(args.camara, backend)
-    if not cap.isOpened() and args.camara == 0:
-        log("AVISO: No se detectó la cámara 0. Intentando con la cámara 1...")
-        cap = cv2.VideoCapture(1, backend)
+    cap = abrir_camara(args.camara)
     if not cap.isOpened():
         log(f"ERROR: No se pudo abrir la cámara {args.camara}.")
         conexion.cerrar()
