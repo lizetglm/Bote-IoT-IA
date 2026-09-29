@@ -3,3 +3,14 @@ __pycache__/
 runs/
 modelo/last.pt
 .env
+
+
+Dataset_Unificado/
+dataset1/
+dataset2/
+dataset3/
+dataset4/
+dataset3.zip
+dataset4.zip
+archive(3).zip
+archive(4).zip

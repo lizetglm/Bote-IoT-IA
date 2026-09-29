@@ -1,28 +1,35 @@
 {% extends "base.html" %}
-
-{% block titulo %}Registro · Bote Inteligente{% endblock %}
+{% block titulo %}Registro · EcoSort{% endblock %}
 
 {% block contenido %}
-  <section class="tarjeta">
-    <h1>Crear cuenta</h1>
+<section class="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg border border-gray-100">
+  <h1 class="text-3xl font-extrabold text-gray-900 text-center mb-2">Crea tu cuenta</h1>
+  <p class="text-center text-gray-500 mb-8">Únete a la red de reciclaje inteligente.</p>
 
-    <form class="formulario" id="form-registro">
-      <label>Nombre
-        <input type="text" name="nombre" autocomplete="name" required>
-      </label>
-      <label>Correo
-        <input type="email" name="correo" autocomplete="email" required>
-      </label>
-      <label>Contraseña
-        <input type="password" name="contrasena" autocomplete="new-password" minlength="6" required>
-      </label>
-      <button class="btn btn-primario" type="submit">Crear cuenta</button>
-    </form>
+  <form class="space-y-4" id="form-registro">
+    <div>
+      <label class="block text-sm font-bold text-gray-700 mb-1">Tu Nombre</label>
+      <input type="text" name="nombre" autocomplete="name" required class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-eco-500 focus:border-eco-500 outline-none transition">
+    </div>
+    <div>
+      <label class="block text-sm font-bold text-gray-700 mb-1">Correo electrónico</label>
+      <input type="email" name="correo" autocomplete="email" required class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-eco-500 focus:border-eco-500 outline-none transition">
+    </div>
+    <div>
+      <label class="block text-sm font-bold text-gray-700 mb-1">Contraseña (Mín. 6 caracteres)</label>
+      <input type="password" name="contrasena" autocomplete="new-password" minlength="6" required class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-eco-500 focus:border-eco-500 outline-none transition">
+    </div>
+    <button class="w-full bg-eco-600 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-eco-700 shadow-md transition disabled:opacity-70 mt-2" type="submit">
+      Crear cuenta
+    </button>
+  </form>
 
-    <p class="mensaje" id="mensaje" role="status"></p>
+  <p class="mensaje text-center text-sm font-medium mt-4" id="mensaje" role="status"></p>
 
-    <p class="cambio">¿Ya tienes cuenta? <a href="{{ url_for('login') }}">Ingresa</a></p>
-  </section>
+  <p class="text-center text-sm text-gray-600 mt-6">
+    ¿Ya tienes cuenta? <a href="{{ url_for('login') }}" class="text-eco-600 font-bold hover:underline">Ingresa aquí</a>
+  </p>
+</section>
 {% endblock %}
 
 {% block scripts %}

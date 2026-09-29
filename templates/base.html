@@ -3,27 +3,52 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block titulo %}Bote Inteligente{% endblock %}</title>
+  <title>{% block titulo %}Basurin | Bote Inteligente{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { eco: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a', 700: '#15803d' } }
+        }
+      }
+    }
+  </script>
+
   <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
 </head>
-<body>
-  <nav class="nav">
-    <a class="nav-marca" href="{{ url_for('index') }}">Bote <span>Inteligente</span></a>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col selection:bg-eco-500 selection:text-white">
+  
+  <!-- Barra de Navegación -->
+  <nav class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+      <a class="text-2xl font-extrabold tracking-tight text-gray-900" href="{{ url_for('index') }}">
+        <span class="text-eco-600">Ba</span>sur<span class="text-eco-600">in</span>
+      </a>
 
-    <!-- Sin sesión -->
-    <div class="nav-acciones" id="nav-invitado">
-      <a class="btn btn-primario" href="{{ url_for('login') }}">Iniciar sesión</a>
-    </div>
+      <!-- Menú Sin Sesión -->
+      <div class="space-x-2" id="nav-invitado">
+        <a class="text-sm font-semibold text-gray-500 hover:text-eco-600 px-3 py-2 transition" href="{{ url_for('login') }}">Ingresar</a>
+        <a class="text-sm font-bold bg-eco-600 text-white px-5 py-2.5 rounded-full hover:bg-eco-700 shadow-md transition" href="{{ url_for('registro') }}">Regístrate</a>
+      </div>
 
-    <!-- Con sesión -->
-    <div class="nav-acciones oculto" id="nav-usuario">
-      <span class="nav-nombre" id="usuario-nombre"></span>
-      <span class="nav-puntos"><strong id="usuario-puntos">0</strong> pts</span>
-      <button class="btn btn-secundario" id="btn-salir">Salir</button>
+      <!-- Menú Con Sesión (Oculto por defecto) -->
+      <div class="flex items-center space-x-4 oculto" id="nav-usuario">
+        <div class="text-right hidden sm:block">
+          <p class="text-sm font-bold text-gray-800 leading-tight" id="usuario-nombre">Usuario</p>
+          <p class="text-xs font-semibold text-eco-600"><span id="usuario-puntos" class="text-base">0</span> pts</p>
+        </div>
+        <!-- Puntos en versión móvil -->
+        <div class="sm:hidden bg-eco-50 px-3 py-1 rounded-full border border-eco-200">
+           <span class="text-sm font-bold text-eco-700" id="usuario-puntos-movil">0</span><span class="text-xs text-eco-600"> pts</span>
+        </div>
+        <button class="text-sm bg-gray-100 text-gray-600 font-semibold px-4 py-2 rounded-full hover:bg-gray-200 transition" id="btn-salir">Salir</button>
+      </div>
     </div>
   </nav>
 
-  <main>
+  <!-- Contenedor Principal -->
+  <main class="flex-grow w-full max-w-5xl mx-auto px-4 py-8 flex flex-col items-center justify-center">
     {% block contenido %}{% endblock %}
   </main>
 
@@ -35,6 +60,17 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="{{ url_for('static', filename='js/sesion.js') }}"></script>
+  
+  <script>
+    // Pequeño truco para sincronizar los puntos en la vista móvil y escritorio
+    db.auth.onAuthStateChange((_evento, sesion) => {
+      setTimeout(() => {
+        const pts = document.getElementById('usuario-puntos').textContent;
+        document.getElementById('usuario-puntos-movil').textContent = pts;
+      }, 500);
+    });
+  </script>
+
   {% block scripts %}{% endblock %}
 </body>
 </html>

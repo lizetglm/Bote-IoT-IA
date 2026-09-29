@@ -1,10 +1,28 @@
 {% extends "base.html" %}
+{% block titulo %}Inicio · EcoSort{% endblock %}
 
 {% block contenido %}
-  <header>
-    <h1>Bote <span>Inteligente</span></h1>
-    <p>Clasificación de residuos con visión artificial</p>
-  </header>
+<div class="text-center w-full max-w-4xl bg-white p-8 md:p-12 rounded-3xl shadow-xl border border-gray-100">
+  
+  <div class="mx-auto w-20 h-20 bg-eco-50 text-eco-600 rounded-full flex items-center justify-center mb-6">
+    <svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+  </div>
+  
+  <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 tracking-tight">Recicla con <span class="text-eco-600">IA</span></h1>
+  <p class="text-lg text-gray-500 mb-8 leading-relaxed">
+    Nuestra visión artificial (YOLOv8) clasifica tu basura automáticamente. Escanea, deposita y gana recompensas por ayudar al planeta.
+  </p>
+  
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left mb-8">
+    <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100">
+      <h3 class="font-bold text-gray-800 text-lg">Cero Contacto</h3>
+      <p class="text-sm text-gray-500 mt-1">El bote detecta y separa físicamente la basura por ti.</p>
+    </div>
+    <div class="bg-eco-50 p-5 rounded-2xl border border-eco-100">
+      <h3 class="font-bold text-eco-700 text-lg">Gana Puntos</h3>
+      <p class="text-sm text-eco-600 mt-1">Acumula puntos en tu cuenta por cada residuo correcto.</p>
+    </div>
+  </div>
 
-  <p>Página en construcción.</p>
+</div>
 {% endblock %}
