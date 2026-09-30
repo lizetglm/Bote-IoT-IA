@@ -71,13 +71,23 @@ create table if not exists public.botes (
 -- Qué usuario está conectado a qué bote en este momento.
 -- Un bote solo atiende a un usuario a la vez y viceversa.
 -- Las sesiones las crea el servidor (service_role) al validar el QR del bote.
+-- Si otro usuario escanea el mismo bote, la sesión anterior se cierra y empieza la suya.
+-- Vence a los 5 minutos del escaneo o del último depósito (actividad_en).
 -- ============================================================
 create table if not exists public.sesiones_activas (
-  id          bigint generated always as identity primary key,
-  usuario_id  uuid   not null unique references public.usuarios (id) on delete cascade,
-  bote_id     bigint not null unique references public.botes (id) on delete cascade,
-  iniciada_en timestamptz not null default now()
+  id           bigint generated always as identity primary key,
+  usuario_id   uuid   not null unique references public.usuarios (id) on delete cascade,
+  bote_id      bigint not null unique references public.botes (id) on delete cascade,
+  iniciada_en  timestamptz not null default now(),
+  actividad_en timestamptz not null default now()
 );
+
+-- Para bases creadas antes de que las sesiones vencieran
+alter table public.sesiones_activas
+  add column if not exists actividad_en timestamptz not null default now();
+
+comment on column public.sesiones_activas.actividad_en is
+  'Último escaneo o depósito; la sesión vence 5 minutos después (MINUTOS_SESION en camara_web.py)';
 
 -- ============================================================
 -- TRANSACCIONES

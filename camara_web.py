@@ -7,7 +7,8 @@ la misma computadora que tiene la cámara (la laptop del bote), no en Render.
 
 Cada clasificación se guarda en Supabase como una fila de transacciones y el panel cuenta desde ahí: una sola fuente
 de datos, sin conteos duplicados en memoria. Si hay un usuario vinculado al bote (sesiones_activas) la fila es suya y
-le da puntos; si no, se guarda sin usuario y con 0 puntos (cuenta para las estadísticas).
+le da puntos; si no, se guarda sin usuario y con 0 puntos (cuenta para las estadísticas). La sesión vence a los
+MINUTOS_SESION del escaneo o del último depósito: cada depósito reinicia el tiempo.
 
 Las librerías pesadas (torch, ultralytics, cv2) se importan al pulsar "Iniciar cámara", no al arrancar Flask.
 """
@@ -20,10 +21,15 @@ import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 CALIDAD_JPEG = 70
 FPS_VIDEO = 12  # fotogramas por segundo que se mandan al navegador
+
+# Minutos sin actividad (escaneo o depósito) tras los que se cierra la sesión con el bote.
+# Igual que MINUTOS_SESION en static/js/escanear.js.
+MINUTOS_SESION = 5
 
 # Puntos que gana el usuario por cada pieza, según el material (clave sin acentos ni símbolos)
 PUNTOS_POR_MATERIAL = {"organico": 5, "plastico": 8, "papelcarton": 6, "metal": 12, "vidrio": 10}
@@ -62,7 +68,15 @@ class RegistroTransacciones:
     def _registrar(self, material):
         puntos = PUNTOS_POR_MATERIAL.get(clave_material(material), 0)
         try:
-            filtro = urllib.parse.urlencode({"bote_id": f"eq.{self.bote_id}", "select": "usuario_id"})
+            ahora = datetime.now(timezone.utc)
+            # La sesión que lleva más de MINUTOS_SESION sin actividad ya venció: se cierra antes de mirar quién está
+            vencida = urllib.parse.urlencode({
+                "bote_id": f"eq.{self.bote_id}",
+                "actividad_en": f"lt.{(ahora - timedelta(minutes=MINUTOS_SESION)).isoformat()}",
+            })
+            self._peticion("DELETE", f"sesiones_activas?{vencida}")
+
+            filtro = urllib.parse.urlencode({"bote_id": f"eq.{self.bote_id}", "select": "id,usuario_id"})
             sesiones = self._peticion("GET", f"sesiones_activas?{filtro}")
             # Sin nadie vinculado igual se guarda (cuenta para las estadísticas), pero sin usuario ni puntos
             usuario_id = sesiones[0]["usuario_id"] if sesiones else None
@@ -72,6 +86,9 @@ class RegistroTransacciones:
                 "usuario_id": usuario_id, "bote_id": self.bote_id,
                 "material": material, "puntos": puntos,
             })
+            if sesiones:
+                # Cada depósito reinicia el tiempo de la sesión
+                self._peticion("PATCH", f"sesiones_activas?id=eq.{sesiones[0]['id']}", {"actividad_en": ahora.isoformat()})
             self._anotar(f"{material}: registrado (+{puntos} pts)" if usuario_id
                          else f"{material}: registrado sin usuario (nadie vinculado al bote, sin puntos)", True)
         except (urllib.error.URLError, ValueError, KeyError) as e:

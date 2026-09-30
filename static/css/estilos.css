@@ -39,3 +39,22 @@ button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* Escanear QR: el video de html5-qrcode llena el recuadro cuadrado */
+.lector-qr video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
+
+/* Línea que sube y baja dentro del marco guía mientras se busca el QR */
+.linea-escaneo {
+  animation: linea-escaneo 2.2s ease-in-out infinite alternate;
+}
+@keyframes linea-escaneo {
+  from { transform: translateY(-4.5rem); }
+  to   { transform: translateY(4.5rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .linea-escaneo { animation: none; }
+}

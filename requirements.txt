@@ -3,3 +3,5 @@ opencv-python
 pyserial
 flask
 python-dotenv
+cryptography
+qrcode

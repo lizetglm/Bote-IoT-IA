@@ -8,6 +8,7 @@
 
   const VIVO_ENTRE_CARGAS = 20000; // ms entre recargas si Realtime no conecta
   const REFRESCO_SESION = 10000;   // ms entre revisiones de "conectado a un bote"
+  const MINUTOS_SESION = 5;        // igual que en camara_web.py: la sesión vence sin depósitos
 
   const estado = { perfil: null, tx: [], canjes: [], premios: [], botes: new Map(), sesion: null };
 
@@ -17,6 +18,8 @@
     if (texto !== undefined) nodo.textContent = texto;
     return nodo;
   };
+  // Una sesión sin actividad en MINUTOS_SESION ya no cuenta aunque su fila siga ahí
+  const vigente = (s) => (s && new Date(s.actividad_en ?? s.iniciada_en).getTime() + MINUTOS_SESION * 60000 > Date.now() ? s : null);
   const plural = (n, uno, varios) => (n === 1 ? uno : varios);
   const suma = (lista, campo) => lista.reduce((total, f) => total + (f[campo] ?? 0), 0);
 
@@ -176,7 +179,7 @@
       db.from("transacciones").select("id, material, puntos, fecha, bote_id").eq("usuario_id", uid).order("fecha", { ascending: false }).limit(1000),
       db.from("canjes").select("costo, estado").eq("usuario_id", uid),
       db.from("premios").select("id, nombre, costo, tipo").eq("activo", true).order("costo"),
-      db.from("sesiones_activas").select("bote_id, iniciada_en").eq("usuario_id", uid).maybeSingle(),
+      db.from("sesiones_activas").select("bote_id, iniciada_en, actividad_en").eq("usuario_id", uid).maybeSingle(),
     ]);
     if (perfil.error) throw perfil.error;
 
@@ -184,7 +187,7 @@
     estado.tx = dato(tx, []); // TODO: con >1000 depósitos por usuario, calcular los totales con una vista o RPC
     estado.canjes = dato(canjes, []);
     estado.premios = dato(premios, []);
-    estado.sesion = dato(sesion, null);
+    estado.sesion = vigente(dato(sesion, null));
     await nombresDeBotes([...estado.tx.slice(0, 5).map((t) => t.bote_id), estado.sesion?.bote_id]);
   }
 
@@ -270,8 +273,8 @@
 
   async function refrescarSesion(uid) {
     try {
-      const { data } = await db.from("sesiones_activas").select("bote_id, iniciada_en").eq("usuario_id", uid).maybeSingle();
-      estado.sesion = data ?? null;
+      const { data } = await db.from("sesiones_activas").select("bote_id, iniciada_en, actividad_en").eq("usuario_id", uid).maybeSingle();
+      estado.sesion = vigente(data);
       await nombresDeBotes([estado.sesion?.bote_id]);
       pintarSesion();
     } catch (e) {
