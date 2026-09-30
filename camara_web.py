@@ -6,9 +6,11 @@ el último fotograma anotado se guarda en memoria y el panel lo ve como MJPEG. S
 la misma computadora que tiene la cámara (la laptop del bote), no en Render.
 
 Cada clasificación se guarda en Supabase como una fila de transacciones y el panel cuenta desde ahí: una sola fuente
-de datos, sin conteos duplicados en memoria. Si hay un usuario vinculado al bote (sesiones_activas) la fila es suya y
-le da puntos; si no, se guarda sin usuario y con 0 puntos (cuenta para las estadísticas). La sesión vence a los
-MINUTOS_SESION del escaneo o del último depósito: cada depósito reinicia el tiempo.
+de datos, sin conteos duplicados en memoria. Si hay una sesión viva (sesiones_activas) la fila toma su usuario y su
+bote y le da puntos; si hay varias, la más nueva. Si no hay ninguna se guarda sin usuario, con 0 puntos (cuenta para
+las estadísticas) y en el BOTE_ID del .env. La sesión vence a los MINUTOS_SESION del escaneo o del último depósito:
+cada depósito reinicia el tiempo. Tras cada clasificación la cámara espera ESPERA_DEPOSITO segundos (el bote rota y
+abre la compuerta) antes de contar el siguiente residuo.
 
 Las librerías pesadas (torch, ultralytics, cv2) se importan al pulsar "Iniciar cámara", no al arrancar Flask.
 """
@@ -62,35 +64,46 @@ class RegistroTransacciones:
         return json.loads(datos) if datos else None
 
     def registrar(self, material):
+        # La hora es la de la detección, no la de cuando responda la red: con ella se decide si la sesión seguía viva.
         # En otro hilo: la cámara no debe esperar a la red
-        threading.Thread(target=self._registrar, args=(material,), daemon=True).start()
+        ahora = datetime.now(timezone.utc)
+        threading.Thread(target=self._registrar, args=(material, ahora), daemon=True).start()
 
-    def _registrar(self, material):
+    def _registrar(self, material, ahora):
         puntos = PUNTOS_POR_MATERIAL.get(clave_material(material), 0)
         try:
-            ahora = datetime.now(timezone.utc)
             # La sesión que lleva más de MINUTOS_SESION sin actividad ya venció: se cierra antes de mirar quién está
-            vencida = urllib.parse.urlencode({
-                "bote_id": f"eq.{self.bote_id}",
-                "actividad_en": f"lt.{(ahora - timedelta(minutes=MINUTOS_SESION)).isoformat()}",
-            })
-            self._peticion("DELETE", f"sesiones_activas?{vencida}")
+            limite = (ahora - timedelta(minutes=MINUTOS_SESION)).isoformat()
+            self._peticion("DELETE", "sesiones_activas?" + urllib.parse.urlencode({"actividad_en": f"lt.{limite}"}))
 
-            filtro = urllib.parse.urlencode({"bote_id": f"eq.{self.bote_id}", "select": "id,usuario_id"})
-            sesiones = self._peticion("GET", f"sesiones_activas?{filtro}")
-            # Sin nadie vinculado igual se guarda (cuenta para las estadísticas), pero sin usuario ni puntos
-            usuario_id = sesiones[0]["usuario_id"] if sesiones else None
-            if usuario_id is None:
-                puntos = 0
-            self._peticion("POST", "transacciones", {
-                "usuario_id": usuario_id, "bote_id": self.bote_id,
-                "material": material, "puntos": puntos,
+            # De las sesiones vivas manda la más nueva: el último en escanear es quien está frente al bote.
+            # Sus datos (usuario y bote) son los de la transacción.
+            filtro = urllib.parse.urlencode({
+                "actividad_en": f"gte.{limite}", "select": "id,usuario_id,bote_id",
+                "order": "iniciada_en.desc", "limit": 1,
             })
+            sesiones = self._peticion("GET", f"sesiones_activas?{filtro}")
             if sesiones:
+                sesion = sesiones[0]
+                usuario_id, bote_id = sesion["usuario_id"], sesion["bote_id"]
+            else:
+                # Sin nadie vinculado igual se guarda (cuenta para las estadísticas), sin usuario ni puntos,
+                # en el bote de esta cámara (BOTE_ID del .env). Es el único caso en que se usa.
+                sesion, usuario_id, bote_id, puntos = None, None, self.bote_id, 0
+                if bote_id is None:
+                    self._anotar(f"{material}: no se guardó (nadie vinculado y falta BOTE_ID en .env)", False)
+                    return
+
+            self._peticion("POST", "transacciones", {
+                "usuario_id": usuario_id, "bote_id": bote_id,
+                "material": material, "puntos": puntos, "fecha": ahora.isoformat(),
+            })
+            if sesion:
                 # Cada depósito reinicia el tiempo de la sesión
-                self._peticion("PATCH", f"sesiones_activas?id=eq.{sesiones[0]['id']}", {"actividad_en": ahora.isoformat()})
-            self._anotar(f"{material}: registrado (+{puntos} pts)" if usuario_id
-                         else f"{material}: registrado sin usuario (nadie vinculado al bote, sin puntos)", True)
+                self._peticion("PATCH", f"sesiones_activas?id=eq.{sesion['id']}", {"actividad_en": ahora.isoformat()})
+            self._anotar(f"{material}: registrado en el bote {bote_id} (+{puntos} pts)" if sesion
+                         else f"{material}: registrado sin usuario en el bote {bote_id} (nadie vinculado, sin puntos)",
+                         True)
         except (urllib.error.URLError, ValueError, KeyError) as e:
             detalle = e.read().decode(errors="replace")[:200] if isinstance(e, urllib.error.HTTPError) else e
             self._anotar(f"{material}: no se pudo guardar en Supabase ({detalle})", False)
@@ -132,11 +145,13 @@ class ServicioCamara:
     def _crear_registro():
         url, llave = os.getenv("SUPABASE_URL", ""), os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
         bote_id = os.getenv("BOTE_ID", "")
-        if not (url and llave and bote_id.isdigit()):
-            print("AVISO: faltan SUPABASE_SERVICE_ROLE_KEY o BOTE_ID en .env; las clasificaciones no se guardarán.",
-                  flush=True)
+        if not (url and llave):
+            print("AVISO: falta SUPABASE_SERVICE_ROLE_KEY en .env; las clasificaciones no se guardarán.", flush=True)
             return None
-        return RegistroTransacciones(url, llave, int(bote_id))
+        if not bote_id.isdigit():
+            print("AVISO: falta BOTE_ID en .env; solo se guardarán las clasificaciones con una sesión activa.",
+                  flush=True)
+        return RegistroTransacciones(url, llave, int(bote_id) if bote_id.isdigit() else None)
 
     # ---------- Lectura (desde las peticiones HTTP) ----------
     def resumen(self):
@@ -157,7 +172,7 @@ class ServicioCamara:
         cap = None
         try:
             import cv2
-            from bote_inteligente import (MODELO_POR_DEFECTO, BoteInteligente, ConexionESP32,
+            from bote_inteligente import (ESPERA_DEPOSITO, MODELO_POR_DEFECTO, BoteInteligente, ConexionESP32,
                                           abrir_camara, elegir_dispositivo, log)
 
             if not Path(MODELO_POR_DEFECTO).exists():
@@ -165,7 +180,8 @@ class ServicioCamara:
 
             self.dispositivo = elegir_dispositivo()
             self._conexion = ConexionESP32(puerto)
-            bote = BoteInteligente(MODELO_POR_DEFECTO, self._conexion, confianza, self.dispositivo)
+            espera = float(os.getenv("ESPERA_DEPOSITO", ESPERA_DEPOSITO))
+            bote = BoteInteligente(MODELO_POR_DEFECTO, self._conexion, confianza, self.dispositivo, espera)
             if self.registro is not None:
                 bote.al_clasificar = self.registro.registrar
 

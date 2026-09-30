@@ -56,7 +56,9 @@ COMANDOS = {
 COMANDOS_POR_ID = {0: "O", 1: "P", 2: "C", 3: "M", 4: "V"}
 
 FRAMES_PARA_CONFIRMAR = 8   # frames seguidos con la misma clase antes de enviar
-ESPERA_ENTRE_ENVIOS = 3.0   # segundos que se deja al servo moverse antes del siguiente envío
+# Segundos tras cada clasificación para que el bote rote, abra la compuerta y caiga el residuo.
+# Mientras dura, lo que vea la cámara no cuenta (sin ESP32 el objeto sigue ahí y se contaría otra vez).
+ESPERA_DEPOSITO = 6.0
 REINTENTO_SERIAL = 5.0      # segundos entre intentos de reconexión del ESP32
 
 # Palabras que suelen aparecer en la descripción de un ESP32 en Windows
@@ -208,11 +210,12 @@ class BoteInteligente:
     Está separado del bucle de la cámara para poder reutilizarlo después desde Flask.
     """
 
-    def __init__(self, ruta_modelo, conexion, confianza=0.65, dispositivo="cpu"):
+    def __init__(self, ruta_modelo, conexion, confianza=0.65, dispositivo="cpu", espera_deposito=ESPERA_DEPOSITO):
         self.model = YOLO(str(ruta_modelo))
         self.conexion = conexion
         self.confianza = confianza
         self.dispositivo = dispositivo
+        self.espera_deposito = espera_deposito
 
         self.candidato = None
         self.frames_candidato = 0
@@ -259,8 +262,14 @@ class BoteInteligente:
                 log("Cámara: sin objetos detectados")
             self.ultima_vista = vista
 
+    def depositando(self):
+        """Segundos que faltan para que termine el depósito en curso (0 si el bote está libre)."""
+        return max(0.0, self.ultimo_envio + self.espera_deposito - time.time())
+
     def _decidir_envio(self, mejor):
-        if mejor is None:
+        # Mientras el bote rota y la compuerta está abierta no se cuenta nada: al terminar, el
+        # residuo siguiente necesita sus FRAMES_PARA_CONFIRMAR frames desde cero
+        if mejor is None or self.depositando():
             self.candidato, self.frames_candidato = None, 0
             return
 
@@ -270,9 +279,7 @@ class BoteInteligente:
         else:
             self.candidato, self.frames_candidato = nombre, 1
 
-        listo = self.frames_candidato >= FRAMES_PARA_CONFIRMAR
-        libre = time.time() - self.ultimo_envio >= ESPERA_ENTRE_ENVIOS
-        if not (listo and libre):
+        if self.frames_candidato < FRAMES_PARA_CONFIRMAR:
             return
 
         comando = self.comando_para(id_clase, nombre)
@@ -298,8 +305,11 @@ class BoteInteligente:
         else:
             estado, color = "ESP32: SIN CONEXION (simulacion)", (0, 0, 255)
 
+        restante = self.depositando()
         lineas = [
             (estado, color),
+            (f"Depositando... {int(restante) + 1} s" if restante else "Listo para el siguiente residuo",
+             (0, 200, 255) if restante else (255, 255, 255)),
             (f"Ultimo comando: {self.ultimo_comando}", (255, 255, 255)),
             ("Conteo: " + (", ".join(f"{k}={v}" for k, v in self.conteo.items()) or "-"), (255, 255, 255)),
         ]

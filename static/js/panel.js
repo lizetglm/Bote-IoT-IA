@@ -132,7 +132,7 @@
     registro.classList.toggle("hidden", !ultimo && !encendidaSinRegistro);
     if (encendidaSinRegistro) {
       registro.className = "mt-3 text-sm font-semibold text-red-700";
-      registro.textContent = "Las clasificaciones no se están guardando: faltan SUPABASE_SERVICE_ROLE_KEY o BOTE_ID en el .env del servidor.";
+      registro.textContent = "Las clasificaciones no se están guardando: falta SUPABASE_SERVICE_ROLE_KEY en el .env del servidor.";
     } else if (ultimo) {
       registro.className = `mt-3 text-sm ${ultimo.ok ? "text-gray-600" : "font-semibold text-amber-800"}`;
       registro.textContent = `Último registro (${Basurin.hace(new Date(ultimo.hora * 1000).toISOString())}): ${ultimo.texto}`;
