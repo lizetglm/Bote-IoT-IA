@@ -1,12 +1,88 @@
 {% extends "base_app.html" %}
-{% block titulo %}Mi perfil · Basurin{% endblock %}
+{% block titulo %}Mi Perfil · Basurin{% endblock %}
 
 {% block contenido %}
-<section class="rounded-3xl border-2 border-dashed border-gray-300 bg-white p-8 text-center">
-  <h1 class="text-2xl font-extrabold text-gray-900">Mi perfil</h1>
-  <p class="mt-2 text-gray-500">Pantalla en construcción.</p>
-  <p class="mt-1 text-sm text-gray-500">Lo que debe hacer está descrito en <code>static/js/perfil.js</code>.</p>
-</section>
+<div id="perfil-vista" aria-busy="true">
+
+  <!-- Bienvenida -->
+  <section aria-labelledby="titulo-perfil" class="mb-6">
+    <p class="text-sm font-semibold text-eco-700">Conoce tu información</p>
+    <p id="saludo" class="text-sm font-semibold text-eco-700"></p>
+    <h1 id="titulo-perfil" class="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">Mi Perfil</h1>
+    <p class="mt-1 text-gray-500">Administra tu cuenta y revisa tu historial.</p>
+  </section>
+
+  <div class="grid gap-4 lg:grid-cols-12 items-start">
+
+    <!-- COLUMNA IZQ: Datos del Usuario -->
+    <section aria-labelledby="t-datos" class="flex flex-col gap-5 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-100 lg:col-span-5">
+      <h2 id="t-datos" class="sr-only">Datos de la cuenta</h2>
+      
+      <!-- Avatar y estado principal -->
+      <div class="flex items-center gap-4 border-b border-gray-100 pb-5">
+        <span aria-hidden="true" class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-eco-100 text-eco-700 text-2xl font-bold uppercase" id="avatar-inicial">
+          <!-- Se llena por JS con la inicial -->
+        </span>
+        <div class="flex-1 rounded-2xl bg-eco-600 px-5 py-1 ext-white shadow-lg">
+          <p class="text-sm ">Saldo actual</p>
+          <p class="text-2xl font-extrabold text-gray-900"><span id="info-puntos">0</span> <span class="text-sm font-semibold text-eco-100">pts</span></p>
+          
+          <!-- Etiqueta de Administrador (Oculta por defecto) -->
+          <span id="badge-admin" class="hidden mt-1 inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-semibold text-purple-700 ring-1 ring-inset ring-purple-600/20">
+            Administrador
+          </span>
+        </div>
+      </div>
+
+      <!-- Formulario de Edición -->
+      <form id="form-perfil" class="flex flex-col gap-4">
+        
+        <div>
+          <label for="input-nombre" class="block text-sm font-bold text-gray-700 mb-1">Nombre</label>
+          <input type="text" id="input-nombre" name="nombre" minlength="1" maxlength="60" required
+            class="w-full rounded-xl border-gray-300 bg-gray-50 px-4 py-2.5 text-gray-900 focus:border-eco-500 focus:bg-white focus:ring-2 focus:ring-eco-500 sm:text-sm transition">
+        </div>
+
+        <div>
+          <label for="input-correo" class="block text-sm font-bold text-gray-700 mb-1">Correo electrónico</label>
+          <!-- Readonly: bloqueado para que no se pueda escribir -->
+          <input type="email" id="input-correo" readonly disabled
+            class="w-full rounded-xl border-gray-200 bg-gray-100 px-4 py-2.5 text-gray-500 cursor-not-allowed sm:text-sm">
+          <p class="mt-1 text-xs text-gray-400">El correo no se puede cambiar directamente.</p>
+        </div>
+
+        <button type="submit" id="btn-guardar" class="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-eco-600 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-eco-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-eco-500 focus-visible:ring-offset-2 transition disabled:opacity-70">
+          Guardar cambios
+        </button>
+      </form>
+
+      <!-- Fecha de registro -->
+      <p class="mt-2 text-center text-xs text-gray-400">
+        Miembro desde <span id="info-registro" class="font-medium text-gray-500">...</span>
+      </p>
+    </section>
+
+    <!-- COLUMNA DER: Historial de Transacciones -->
+    <section aria-labelledby="t-historial" class="flex flex-col rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-100 lg:col-span-7">
+      <h2 id="t-historial" class="text-lg font-bold text-gray-900 border-b border-gray-100 pb-4 mb-4">Historial de depósitos</h2>
+      
+      <div id="historial-cargando" class="animate-pulse space-y-3">
+        <div class="h-16 w-full rounded-2xl bg-gray-50"></div>
+        <div class="h-16 w-full rounded-2xl bg-gray-50"></div>
+      </div>
+      
+      <ul id="lista-historial" class="space-y-3"></ul>
+      
+      <p id="historial-vacio" class="hidden py-8 text-center text-sm text-gray-500">Aún no has realizado ningún depósito.</p>
+      
+      <!-- Paginación -->
+      <button id="btn-mas" class="hidden mt-6 w-full rounded-xl bg-gray-50 py-3 text-sm font-bold text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-eco-500 transition">
+        Ver más
+      </button>
+    </section>
+
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
