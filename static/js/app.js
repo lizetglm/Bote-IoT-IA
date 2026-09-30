@@ -46,12 +46,6 @@
     return "hace un momento";
   }
 
-  // Primera letra de las dos primeras palabras ("Ana López" -> "AL"); ignora símbolos y signos
-  function iniciales(nombre) {
-    const letras = (nombre || "").trim().split(/\s+/).map((palabra) => palabra.match(/\p{L}/u)?.[0]).filter(Boolean);
-    return (letras.slice(0, 2).join("") || "?").toUpperCase();
-  }
-
   // ---------- Materiales (los nombres que manda el bote en transacciones.material) ----------
   const MATERIALES = {
     organico:    { etiqueta: "Orgánico",       punto: "bg-lime-500",  chip: "bg-lime-100 text-lime-900" },
@@ -123,7 +117,6 @@
   function pintarMenu(perfil) {
     $("menu-nombre").textContent = perfil.nombre;
     $("menu-puntos").textContent = numero(perfil.puntos);
-    $("avatar-iniciales").replaceChildren(iniciales(perfil.nombre));
     $("menu-item-panel").classList.toggle("hidden", perfil.rol !== 1);
   }
 

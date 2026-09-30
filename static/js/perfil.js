@@ -12,7 +12,6 @@
   const infoPuntos = document.getElementById('info-puntos');
   const infoRegistro = document.getElementById('info-registro');
   const badgeAdmin = document.getElementById('badge-admin');
-  const avatarInicial = document.getElementById('avatar-inicial');
   const formPerfil = document.getElementById('form-perfil');
   const btnGuardar = document.getElementById('btn-guardar');
 
@@ -28,7 +27,6 @@
   inputNombre.value = perfil.nombre || '';
   inputCorreo.value = sesion.user.email;
   infoPuntos.textContent = perfil.puntos || 0;
-  avatarInicial.textContent = (perfil.nombre || sesion.user.email).charAt(0);
   
   if (esAdmin) badgeAdmin.classList.remove('hidden');
 
@@ -63,7 +61,6 @@
       
       // Éxito: Actualizar memoria local y menú superior
       perfil.nombre = nuevoNombre;
-      avatarInicial.textContent = nuevoNombre.charAt(0);
       Basurin.pintarMenu({ ...perfil, nombre: nuevoNombre });
       
       aviso("Perfil actualizado correctamente.", "exito");

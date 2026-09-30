@@ -51,10 +51,8 @@
       </a>
 
       <a id="btn-perfil" href="{{ url_for('perfil') }}" aria-label="Mi perfil"
-         class="flex h-11 w-11 items-center justify-center rounded-full bg-eco-50 text-sm font-bold text-eco-800 ring-1 ring-eco-200 hover:bg-eco-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-eco-600">
-        <span id="avatar-iniciales" class="flex items-center justify-center">
-          <svg aria-hidden="true" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-        </span>
+         class="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-eco-200 hover:ring-eco-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-eco-600">
+        <img src="{{ url_for('static', filename='img/logo-128.jpeg') }}" alt="" width="44" height="44" class="h-full w-full object-cover">
       </a>
     </div>
   </header>
