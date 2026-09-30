@@ -135,8 +135,12 @@ def _es_admin(token):
 
 
 def _demo_local():
-    # Modo demostración (?demo=1&admin=1): solo con Flask en debug y desde esta misma computadora
-    return app.debug and request.headers.get("X-Basurin-Demo") == "1" and request.remote_addr in ("127.0.0.1", "::1")
+    # Modo demostración (?demo=1&admin=1): solo con Flask en debug y desde esta misma computadora.
+    # Con un túnel (cloudflared, ngrok) las visitas de internet también llegan desde 127.0.0.1, pero traen
+    # cabeceras de reenvío: esas no cuentan como locales.
+    reenviada = any(h in request.headers for h in ("X-Forwarded-For", "Cf-Connecting-Ip", "Forwarded"))
+    return (app.debug and not reenviada and request.headers.get("X-Basurin-Demo") == "1"
+            and request.remote_addr in ("127.0.0.1", "::1"))
 
 
 def _token_bearer():
@@ -285,12 +289,13 @@ if __name__ == "__main__":
     if os.getenv("INICIAR_CAMARA", "1") != "0" and (not DEBUG or os.getenv("WERKZEUG_RUN_MAIN") == "true"):
         camara.iniciar(camara=int(os.getenv("CAMARA", "0")))
 
-    # HTTPS con un certificado propio (autofirmado), para probar desde el celular en la red local: el navegador
-    # solo deja usar la cámara en vivo (Escanear QR) con https o en localhost. El certificado se crea una vez en
-    # certs/ y se reutiliza; el celular muestra un aviso de "no seguro" la primera vez y hay que aceptarlo.
-    # HTTPS=0 en el .env lo desactiva (por ejemplo en Render, que ya pone su propio https).
+    # El navegador solo deja usar la cámara en vivo (Escanear QR) con https o en localhost.
+    #  - En esta PC: http://localhost:5000 ya funciona.
+    #  - Desde el celular: un túnel con https real, sin avisos:  cloudflared tunnel --url http://localhost:5000
+    # HTTPS=1 en el .env sirve con un certificado propio (autofirmado) en certs/, sin túnel; el navegador muestra
+    # un aviso de "no seguro" que hay que aceptar, y la dirección debe empezar con https://.
     ssl = None
-    if os.getenv("HTTPS", "1") != "0":
+    if os.getenv("HTTPS", "0") == "1":
         from werkzeug.serving import make_ssl_devcert
 
         base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "certs", "dev")
